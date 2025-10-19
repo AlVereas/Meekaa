@@ -1,15 +1,114 @@
 <!doctype html>
 <html>
   <head>
-    <title>This is the title of the webpage!</title>
+    <title>Meekaa</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+      body {
+        display: block;
+        margin: 0px;
+        overflow: hidden;
+      }
+      #canvas {
+        width: 100vw;
+        height: 100vh;
+        image-rendering: pixelated;
+      }
+    </style>
   </head>
+  
   <body>
-    <canvas id="canvas" width="100%" height="100%">
+    <canvas id="canvas" >
 
     </canvas>
   </body>
+  
   <script>
-    let canvas = document.getElementById("canvas");
-    let ctx = canvas.ctx;
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext('2d');
+
+    const time = Date.now();
+    const t = 5;
+    let i = 0;
+
+    let center = {};
+
+    function clear() {
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function snap (a, b, c, d) {
+      return [Math.floor(a), Math.floor(b), Math.floor(c), Math.floor(d)];
+    }
+    function relativeToPixels(px, py, sx, sy) {
+      const reference = canvas.width > canvas.height ? canvas.height : canvas.width;
+      return [px*reference, py*reference, sx*reference, sy*reference];
+    }
+    function centered(px, py, sx, sy) {
+      return [px+canvas.width/2-sx/2, py+canvas.height/2-sy/2, sx, sy];
+    }
+
+    function drawMouth(type) {
+      ctx.fillStyle = 'white';
+
+      if (type == 'neutral') {
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .3, .05) )) );
+      } else if (type == 'neutral-open') {
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .3, .1) )) );
+      }
+    }
+
+    //*
+    function drawEye(type, p) {
+      ctx.fillStyle = 'white';
+
+      if (type == 'happy') {
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.25, -.125, .2, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.35), -.11, .05, .025) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.15), -.11, .05, .025) )) );
+      } else {
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.25, -.125, .2, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.35), -.11, .05, .025) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.15), -.11, .05, .025) )) );
+      }
+    }
+
+    function drawMouth(type) {
+      ctx.fillStyle = 'white';
+
+      if (type == 'neutral') {
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .35, .03) )) );
+      } else if (type == 'neutral-open') {
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .35, .05) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .13, .25, .02) )) );
+      }
+    }
+    //*/
+
+    function expression(e) {
+      drawMouth(e);
+      drawEye(e, -1);
+      drawEye(e, 1);
+    }
+
+    function render() {
+
+      i++;
+      if (i >= t) {
+        console.log('Rendering');
+        i -= t;
+
+        center = {x: canvas.width/2, y: canvas.height/2};
+
+        clear();
+
+        expression(Math.floor(Date.now()/250)%2 == 0 ? 'neutral' : 'neutral-open');
+      }
+
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
   </script>
 </html>
