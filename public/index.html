@@ -18,19 +18,31 @@
         height: 100vh;
         image-rendering: pixelated;
       }
+      #input {
+        position: absolute;
+        bottom: 0%;
+        left: 5%;
+        width: 90%;
+        height: 15%;
+        image-rendering: pixelated;
+        text-align: center;
+        font-size: 30px; 
+        color: white;
+      }
     </style>
   </head>
   
   <body>
-    <canvas id="canvas" >
-
-    </canvas>
-    <canvas id="buffer" style="display: none;" >
-
-    </canvas>
+    <div id="input">
+      
+    </div>
+    <canvas id="canvas"></canvas>
+    <canvas id="buffer" style="display: none;"></canvas>
   </body>
   
   <script>
+    const input = document.getElementById("input");
+
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext('2d');
     const buffer = document.getElementById('buffer');
@@ -38,17 +50,110 @@
     buffer.height = 32;
     const bctx = buffer.getContext('2d');
 
-    const time = Date.now();
+    const prevTime = 0;
     const t = 5;
     let i = 0;
 
     let center = {};
 
+    let reminders = {
+      timer: -1,
+      interval: 60*60,
+      range: 60*60,
+    }
     let brain = {
       startTime: Date.now(),
       currentEmotion: {},
-
+      talking: true,
+      
+      chat: {
+        fullText: '',
+        text: '',
+        charIndex: 0,
+        typeSpeed: 80,
+        lastCharTime: 0,
+      }
     }
+
+
+    let API_KEY = "";
+    const API_URL = "https://api.groq.com/v1/llm/generate";
+
+    fetch('/public/config.json')
+      .then(res => res.json())
+      .then(config => {
+        console.log('API URL:', config.API_KEY);
+        API_KEY = config.API_KEY;
+    });
+
+    async function getLLMResponse(prompt) {
+        const response = await fetch("https://api.groq.com/openai/v1/responses", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "openai/gpt-oss-20b",
+                input: [
+                  {
+                    role: "system",
+                    content: "You are a Virtual Companion called Meekaa, you should give normal-short length answers, your mission is to keep your user out of bad habits, pushing them into going to learn and stop doing useless things."
+                  },
+                  {
+                    role: "user",
+                    content: prompt
+                  }
+                ]
+            })
+        });
+
+        const data = await response.json();
+
+        //console.log(data.output_text || data);
+
+        const assistantMessages = data.output.filter( (msg) => msg.type === "message" );
+
+        const textOutput = assistantMessages
+          .map(msg => msg.content.map(c => c.text).join(" "))
+          .join("\n");
+
+        console.log(textOutput);
+        //console.log(output, data);
+        chat(textOutput);
+
+        return textOutput, data;
+    }
+
+    /*
+    async function askLLM(prompt) {
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile", // Example model
+            input: prompt
+          })
+        });
+
+        const data = await response.json();
+        return data.output || JSON.stringify(data, null, 2);
+      } catch (error) {
+        console.error("Error calling Groq API:", error);
+        return "Error calling API. Check console.";
+      }
+    }
+
+    async function testLLM() {
+      const result = await askLLM('I want you to answer something');
+      console.log(result);
+    }
+
+    testLLM(); // call the async function*/
 
     function resizeCanvas() {
       // Set the canvas resolution to match the *actual pixel size*
@@ -59,6 +164,7 @@
       canvas.height = window.innerHeight * dpr/1;
 
       // Scale the context so drawing works in CSS pixels
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
     }
 
@@ -93,51 +199,50 @@
           ctx.lineTo(...rel(path.offset.x + e.x*path.scale.x, path.offset.y + e.y*path.scale.y));
         }
       });
+      for (const key in path) {
+        if (Object.hasOwn(path, key)) {
+          delete path[key];
+        }
+      }
     }
 
     function drawMouth(type, pose) {
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'white';
-
       ctx.lineWidth = .0;
       let px = 0;
       let py = .2;
-
-      px += 0;
-      py += 0;
       ctx.beginPath();
 
       if (type == 'smile') {
         if (pose == 'open') {
-          ctx.moveTo(...rel(-.14+px, -.03+py));
-          ctx.lineTo(...rel(-.08+px, -.03+py));
-          ctx.lineTo(...rel(-.08+px, -.01+py));
-          ctx.lineTo(...rel(.08+px, -.01+py));
-          
-          ctx.lineTo(...rel(.08+px, -.03+py));
-          ctx.lineTo(...rel(.14+px, -.03+py));
-          ctx.lineTo(...rel(.14+px, .05+py));
-          ctx.lineTo(...rel(.08+px, .05+py));
-          ctx.lineTo(...rel(.08+px, .07+py));
-          ctx.lineTo(...rel(-.08+px, .07+py));
-          ctx.lineTo(...rel(-.08+px, .05+py));
-          ctx.lineTo(...rel(-.14+px, .05+py));
-
+          pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
+            {t:'m',x:-.14,y:-.03},
+            {t:'l',x:-.08,y:-.03},
+            {t:'l',x:-.08,y:-.01},
+            {t:'l',x:.08,y:-.01},
+            {t:'l',x:.08,y:-.03},
+            {t:'l',x:.14,y:-.03},
+            {t:'l',x:.14,y:.05},
+            {t:'l',x:.08,y:.05},
+            {t:'l',x:.08,y:.07},
+            {t:'l',x:-.08,y:.07},
+            {t:'l',x:-.08,y:.05},
+            {t:'l',x:-.14,y:.05},
+          ]});
         } else {
-          ctx.moveTo(...rel(-.14+px, -.03+py));
-          ctx.lineTo(...rel(-.08+px, -.03+py));
-          ctx.lineTo(...rel(-.08+px, -.01+py));
-          ctx.lineTo(...rel(-.14+px, -.01+py));
-
-          ctx.moveTo(...rel(.1+px, .01+py));
-          ctx.lineTo(...rel(-.1+px, .01+py));
-          ctx.lineTo(...rel(-.1+px, -.01+py));
-          ctx.lineTo(...rel(.1+px, -.01+py));
-
-          ctx.moveTo(...rel(.14+px, -.03+py));
-          ctx.lineTo(...rel(.08+px, -.03+py));
-          ctx.lineTo(...rel(.08+px, -.01+py));
-          ctx.lineTo(...rel(.14+px, -.01+py));
+          pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
+            {t:'m',x:-.16,y:-.03},
+            {t:'l',x:-.1,y:-.03},
+            {t:'l',x:-.1,y:-.01},
+            {t:'l',x:.1,y:-.01},
+            {t:'l',x:.1,y:-.03},
+            {t:'l',x:.16,y:-.03},
+            {t:'l',x:.16,y:.01},
+            {t:'l',x:.1,y:.01},
+            {t:'l',x:.1,y:.03},
+            {t:'l',x:-.1,y:.03},
+            {t:'l',x:-.1,y:.01},
+            {t:'l',x:-.16,y:.01},
+          ]});
         }
       }
 
@@ -148,97 +253,94 @@
     }
 
     function drawEye(type, pose, s) {
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'white';
 
       ctx.lineWidth = .0;
-      let px = s/5;
-      let py = -.2;
+      let px = s*.175;
+      let py = -.09;
 
       px += 0;
       py += 0;
       ctx.beginPath();
 
-      if (s == -1){
-        //ctx.scale(-1, 1)
-      }
-
       if (type == 'neutral') {
         if (pose == 'closed') {
-
-
-        } else {
           pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
-            {t:'m',x:-.14,y:-.03},
+            {t:'m',x:-.12,y:-.03},
             {t:'l',x:-.08,y:-.03},
-            {t:'l',x:-.08,y:-.05},
-            {t:'l',x:+.08,y:-.05},
+            {t:'l',x:-.08,y:-.04},
+            {t:'l',x:+.08,y:-.04},
             {t:'l',x:+.08,y:-.03},
             {t:'l',x:+.1,y:-.03},
-            {t:'l',x:+.1,y:-.02},
-            {t:'l',x:+.15,y:-.02},
+            {t:'l',x:+.1,y:-.01},
             {t:'l',x:+.15,y:-.01},
+            {t:'l',x:+.15,y:-.00},
+            {t:'l',x:+.11,y:-.00},
+            {t:'l',x:+.08,y:-.00},
+            {t:'l',x:+.08,y:-.01},
             {t:'l',x:+.06,y:-.01},
             {t:'l',x:+.06,y:-.02},
             {t:'l',x:-.06,y:-.02},
             {t:'l',x:-.06,y:-.01},
-            {t:'l',x:-.14,y:-.01},
+            {t:'l',x:-.12,y:-.01},
+          ]});
+        } else {
+          pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
+            {t:'m',x:-.12,y:-.04},
+            {t:'l',x:-.08,y:-.04},
+            {t:'l',x:-.08,y:-.06},
+            {t:'l',x:+.08,y:-.06},
+            {t:'l',x:+.08,y:-.05},
+            {t:'l',x:+.1,y:-.05},
+            {t:'l',x:+.1,y:-.03},
+            {t:'l',x:+.15,y:-.03},
+            {t:'l',x:+.15,y:-.02},
+            {t:'l',x:+.11,y:-.02},
+            {t:'l',x:+.11,y:.01},
+            {t:'l',x:+.09,y:.01},
+            {t:'l',x:+.09,y:.02},
+            {t:'l',x:+.08,y:.02},
+            {t:'l',x:+.08,y:-.03},
+            {t:'l',x:+.06,y:-.03},
+            {t:'l',x:+.06,y:-.04},
+            {t:'l',x:-.06,y:-.04},
+            {t:'l',x:-.06,y:-.03},
+            {t:'l',x:-.12,y:-.03},
           ]});
         }
       }
 
       ctx.closePath();
-      //ctx.fill(); 
+      ctx.fill(); 
       ctx.stroke(); 
 
-      if (s == -1){
-        //ctx.scale(-1, 1)
+      if (pose != 'closed') {
+        px += 0.0;
+        py += 0.0;
+        let pupil = 0.03;
+        pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
+          {t:'m',x:pupil,y:pupil},
+          {t:'l',x:-pupil,y:pupil},
+          {t:'l',x:-pupil,y:-pupil},
+          {t:'l',x:pupil,y:-pupil},
+        ]});
       }
+
+      ctx.closePath();
+      ctx.fill(); 
+      ctx.stroke(); 
     }
-
-    /*
-    function drawEye(type, p) {
-      ctx.fillStyle = 'white';
-
-      if (type == 'happy') {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.2, -.11, .15, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.28), -.1, .05, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.12), -.1, .05, .02) )) );
-      } else {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.20, -.15, .12, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.28), -.14, .05, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.30), -.13, .04, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.33), -.12, .04, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.12), -.14, .05, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.20, -0.05, .1, .01) )) );
-      }
-
-      if (type != 'happy') {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.2)+.04, -.11, .05, .05) )) );
-      }
-    }
-
-    function drawMouth(emotion, state) {
-      ctx.fillStyle = 'white';
-
-      if (emotion == 'neutral') {
-        if (state == 'open') {
-          ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .2, .05) )) );
-          ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .13, .15, .02) )) );
-        } else {
-          ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .25, .03) )) );
-        }
-      }
-    }
-    /*/
 
     function animate() {
       let emote = {};
 
-      emote.talking = true;
+      ctx.fillStyle = 'lightgreen';
+      ctx.strokeStyle = 'white';
+
+      emote.talking = brain.talking;
       emote.eyes = 'neutral';
+      emote.eyesPose = Math.floor(Date.now()/500)%5 == 0 ? 'closed' : 'open';
       emote.mouth = 'smile';
-      emote.mouthPose = (Math.floor(Date.now()/250)%2 == 0 && emote.talking) ? 'open' : '';
+      emote.mouthPose = (Math.floor(Date.now()/250)%2 == 0 || !emote.talking) ? 'closed' : 'open';
 
       drawMouth(emote.mouth, emote.mouthPose);
       
@@ -249,23 +351,92 @@
       brain.currentEmotion = emote;
     }
 
-    function render() {
+    function chat(text) {
+      brain.talking = !brain.talking;
+      if (brain.talking) {
+        brain.chat.text = '';
+        brain.chat.fullText = text;
+        brain.chat.charIndex = 0;
+        brain.chat.lastCharTime = brain.lastTime;
+        input.innerHTML = brain.chat.text;
+      }
+    }
+
+    function render(currentTime) {
       i++;
       if (i >= t) {
-        console.log('Rendering');
+        let deltaTime = currentTime - (brain.lastTime || currentTime);
+        //console.log('Rendering ' + deltaTime);
         i -= t;
 
         resizeCanvas();
-
-        center = {x: canvas.width/2, y: canvas.height/2};
-
         clear();
-
         animate();
+
+        brain.lastTime = currentTime;
+      }
+
+      // --- Typing effect handled here ---
+      if (brain.talking) {
+        const chat = brain.chat;
+        const timeSinceLastChar = currentTime - chat.lastCharTime;
+
+        if (timeSinceLastChar >= chat.typeSpeed) {
+            if (chat.charIndex < chat.fullText.length) {
+            // Add next character to chat text
+            chat.text += chat.fullText[chat.charIndex];
+            chat.charIndex++;
+            chat.lastCharTime = currentTime;
+            input.innerHTML = brain.chat.text;
+
+            if (chat.fullText[chat.charIndex] == ' ') { chat.lastCharTime += chat.typeSpeed*1; }
+            if (chat.fullText[chat.charIndex] == ',') { chat.lastCharTime += chat.typeSpeed*6; }
+            if (chat.fullText[chat.charIndex] == '.') { chat.lastCharTime += chat.typeSpeed*8; }
+          } else {
+            brain.talking = false;
+          }
+        }
+      }
+
+      //if ((currentTime - brain.chat.lastCharTime > 5000)) { chat('Owo, uwu'); }
+      
+      if (reminders.timer == -1) {
+        reminders.timer = (Math.random()*reminders.range + reminders.interval)*1000;
+      } else if (reminders.timer < currentTime) {
+        reminders.timer += (Math.random()*reminders.range + reminders.interval)*1000;
+        console.log('should say something now');
+        let output, data = getLLMResponse('> Remind your host to have good habits');
+        typedText = '';
       }
 
       requestAnimationFrame(render);
     }
+
+    let typedText = '';
+    document.addEventListener('keydown', (event) => {
+      const key = event.key;
+
+      // Handle backspace
+      if (key === 'Backspace') {
+        typedText = typedText.slice(0, -1);
+      }
+      // Handle normal characters
+      else if (key.length === 1) {
+        typedText += key;
+      }
+      // Optionally handle Enter or Space
+      else if (key === 'Enter') {
+        let output, data = getLLMResponse(typedText);
+        typedText = '';
+        
+      } else if (key === ' ') {
+        typedText += ' ';
+      }
+
+      input.innerHTML = typedText; // Display current typed text
+      console.log('Current typed text:', typedText); // Optional debug
+    });
+
     requestAnimationFrame(render);
   </script>
 </html>
