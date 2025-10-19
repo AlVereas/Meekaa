@@ -9,8 +9,11 @@
         display: block;
         margin: 0px;
         overflow: hidden;
+        width: 100%;
+        height: 100%;
       }
       #canvas {
+        display: block;
         width: 100vw;
         height: 100vh;
         image-rendering: pixelated;
@@ -22,11 +25,18 @@
     <canvas id="canvas" >
 
     </canvas>
+    <canvas id="buffer" style="display: none;" >
+
+    </canvas>
   </body>
   
   <script>
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext('2d');
+    const buffer = document.getElementById('buffer');
+    buffer.width = 32;
+    buffer.height = 32;
+    const bctx = buffer.getContext('2d');
 
     const time = Date.now();
     const t = 5;
@@ -34,13 +44,32 @@
 
     let center = {};
 
+    let brain = {
+      startTime: Date.now(),
+      currentEmotion: {},
+
+    }
+
+    function resizeCanvas() {
+      // Set the canvas resolution to match the *actual pixel size*
+      
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = window.innerWidth * dpr/1;
+      canvas.height = window.innerHeight * dpr/1;
+
+      // Scale the context so drawing works in CSS pixels
+      ctx.scale(dpr, dpr);
+    }
+
     function clear() {
       ctx.fillStyle = 'black';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     function snap (a, b, c, d) {
-      return [Math.floor(a), Math.floor(b), Math.floor(c), Math.floor(d)];
+      //return [a, b, c, d];
+      return [Math.floor(a), Math.floor(b), c?Math.floor(c):null, d?Math.floor(d):null];
     }
     function relativeToPixels(px, py, sx, sy) {
       const reference = canvas.width > canvas.height ? canvas.height : canvas.width;
@@ -49,62 +78,190 @@
     function centered(px, py, sx, sy) {
       return [px+canvas.width/2-sx/2, py+canvas.height/2-sy/2, sx, sy];
     }
+    function rel(x, y, a=null, b=null) {
+      const reference = canvas.width > canvas.height ? canvas.height : canvas.width;
+      return [x*reference + canvas.width/2, y*reference + canvas.height/2, a?a*reference:null]
+    }
 
-    function drawMouth(type) {
+    function pather(path) {
+      let action = 'm';
+      path.list.forEach(e => {
+        action = e.t || action;
+        if (action=='m') {
+          ctx.moveTo(...rel(path.offset.x + e.x*path.scale.x, path.offset.y + e.y*path.scale.y));
+        } else if (action=='l') {
+          ctx.lineTo(...rel(path.offset.x + e.x*path.scale.x, path.offset.y + e.y*path.scale.y));
+        }
+      });
+    }
+
+    function drawMouth(type, pose) {
       ctx.fillStyle = 'white';
+      ctx.strokeStyle = 'white';
+
+      ctx.lineWidth = .0;
+      let px = 0;
+      let py = .2;
+
+      px += 0;
+      py += 0;
+      ctx.beginPath();
+
+      if (type == 'smile') {
+        if (pose == 'open') {
+          ctx.moveTo(...rel(-.14+px, -.03+py));
+          ctx.lineTo(...rel(-.08+px, -.03+py));
+          ctx.lineTo(...rel(-.08+px, -.01+py));
+          ctx.lineTo(...rel(.08+px, -.01+py));
+          
+          ctx.lineTo(...rel(.08+px, -.03+py));
+          ctx.lineTo(...rel(.14+px, -.03+py));
+          ctx.lineTo(...rel(.14+px, .05+py));
+          ctx.lineTo(...rel(.08+px, .05+py));
+          ctx.lineTo(...rel(.08+px, .07+py));
+          ctx.lineTo(...rel(-.08+px, .07+py));
+          ctx.lineTo(...rel(-.08+px, .05+py));
+          ctx.lineTo(...rel(-.14+px, .05+py));
+
+        } else {
+          ctx.moveTo(...rel(-.14+px, -.03+py));
+          ctx.lineTo(...rel(-.08+px, -.03+py));
+          ctx.lineTo(...rel(-.08+px, -.01+py));
+          ctx.lineTo(...rel(-.14+px, -.01+py));
+
+          ctx.moveTo(...rel(.1+px, .01+py));
+          ctx.lineTo(...rel(-.1+px, .01+py));
+          ctx.lineTo(...rel(-.1+px, -.01+py));
+          ctx.lineTo(...rel(.1+px, -.01+py));
+
+          ctx.moveTo(...rel(.14+px, -.03+py));
+          ctx.lineTo(...rel(.08+px, -.03+py));
+          ctx.lineTo(...rel(.08+px, -.01+py));
+          ctx.lineTo(...rel(.14+px, -.01+py));
+        }
+      }
+
+
+      ctx.closePath();
+      ctx.fill(); 
+      ctx.stroke(); 
+    }
+
+    function drawEye(type, pose, s) {
+      ctx.fillStyle = 'white';
+      ctx.strokeStyle = 'white';
+
+      ctx.lineWidth = .0;
+      let px = s/5;
+      let py = -.2;
+
+      px += 0;
+      py += 0;
+      ctx.beginPath();
+
+      if (s == -1){
+        //ctx.scale(-1, 1)
+      }
 
       if (type == 'neutral') {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .3, .05) )) );
-      } else if (type == 'neutral-open') {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .3, .1) )) );
+        if (pose == 'closed') {
+
+
+        } else {
+          pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
+            {t:'m',x:-.14,y:-.03},
+            {t:'l',x:-.08,y:-.03},
+            {t:'l',x:-.08,y:-.05},
+            {t:'l',x:+.08,y:-.05},
+            {t:'l',x:+.08,y:-.03},
+            {t:'l',x:+.1,y:-.03},
+            {t:'l',x:+.1,y:-.02},
+            {t:'l',x:+.15,y:-.02},
+            {t:'l',x:+.15,y:-.01},
+            {t:'l',x:+.06,y:-.01},
+            {t:'l',x:+.06,y:-.02},
+            {t:'l',x:-.06,y:-.02},
+            {t:'l',x:-.06,y:-.01},
+            {t:'l',x:-.14,y:-.01},
+          ]});
+        }
+      }
+
+      ctx.closePath();
+      //ctx.fill(); 
+      ctx.stroke(); 
+
+      if (s == -1){
+        //ctx.scale(-1, 1)
       }
     }
 
-    //*
+    /*
     function drawEye(type, p) {
       ctx.fillStyle = 'white';
 
       if (type == 'happy') {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.25, -.125, .2, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.35), -.11, .05, .025) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.15), -.11, .05, .025) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.2, -.11, .15, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.28), -.1, .05, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.12), -.1, .05, .02) )) );
       } else {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.25, -.125, .2, .02) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.35), -.11, .05, .025) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.15), -.11, .05, .025) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.20, -.15, .12, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.28), -.14, .05, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.30), -.13, .04, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.33), -.12, .04, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.12), -.14, .05, .02) )) );
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels(p*.20, -0.05, .1, .01) )) );
+      }
+
+      if (type != 'happy') {
+        ctx.fillRect( ...snap(...centered( ...relativeToPixels((p*.2)+.04, -.11, .05, .05) )) );
       }
     }
 
-    function drawMouth(type) {
+    function drawMouth(emotion, state) {
       ctx.fillStyle = 'white';
 
-      if (type == 'neutral') {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .35, .03) )) );
-      } else if (type == 'neutral-open') {
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .35, .05) )) );
-        ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .13, .25, .02) )) );
+      if (emotion == 'neutral') {
+        if (state == 'open') {
+          ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .2, .05) )) );
+          ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .13, .15, .02) )) );
+        } else {
+          ctx.fillRect( ...snap(...centered( ...relativeToPixels(0, .1, .25, .03) )) );
+        }
       }
     }
-    //*/
+    /*/
 
-    function expression(e) {
-      drawMouth(e);
-      drawEye(e, -1);
-      drawEye(e, 1);
+    function animate() {
+      let emote = {};
+
+      emote.talking = true;
+      emote.eyes = 'neutral';
+      emote.mouth = 'smile';
+      emote.mouthPose = (Math.floor(Date.now()/250)%2 == 0 && emote.talking) ? 'open' : '';
+
+      drawMouth(emote.mouth, emote.mouthPose);
+      
+      drawEye(emote.eyes, emote.eyesPose, -1);
+      drawEye(emote.eyes, emote.eyesPose, 1);
+      
+
+      brain.currentEmotion = emote;
     }
 
     function render() {
-
       i++;
       if (i >= t) {
         console.log('Rendering');
         i -= t;
 
+        resizeCanvas();
+
         center = {x: canvas.width/2, y: canvas.height/2};
 
         clear();
 
-        expression(Math.floor(Date.now()/250)%2 == 0 ? 'neutral' : 'neutral-open');
+        animate();
       }
 
       requestAnimationFrame(render);
