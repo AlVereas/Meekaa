@@ -52,19 +52,20 @@
 
     const prevTime = 0;
     const t = 5;
-    let i = 0;
+    let i = 5;
 
     let center = {};
 
     let reminders = {
       timer: -1,
-      interval: 60*60,
-      range: 60*60,
+      interval: 60*15,
+      range: 60*30,
     }
     let brain = {
       startTime: Date.now(),
       currentEmotion: {},
       talking: true,
+      blinkTimer: -1,
       
       chat: {
         fullText: '',
@@ -98,7 +99,7 @@
                 input: [
                   {
                     role: "system",
-                    content: "You are a Virtual Companion called Meekaa, you should give normal-short length answers, your mission is to keep your user out of bad habits, pushing them into going to learn and stop doing useless things."
+                    content: "You are a Virtual Companion called Meekaa, you should give short length human-like answers, your mission is to keep your user out of bad habits, pushing them into going to learn and stop doing useless things."
                   },
                   {
                     role: "user",
@@ -209,39 +210,23 @@
     function drawMouth(type, pose) {
       ctx.lineWidth = .0;
       let px = 0;
-      let py = .2;
+      let py = .1;
       ctx.beginPath();
 
       if (type == 'smile') {
         if (pose == 'open') {
           pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
-            {t:'m',x:-.14,y:-.03},
-            {t:'l',x:-.08,y:-.03},
-            {t:'l',x:-.08,y:-.01},
-            {t:'l',x:.08,y:-.01},
-            {t:'l',x:.08,y:-.03},
-            {t:'l',x:.14,y:-.03},
-            {t:'l',x:.14,y:.05},
-            {t:'l',x:.08,y:.05},
-            {t:'l',x:.08,y:.07},
-            {t:'l',x:-.08,y:.07},
-            {t:'l',x:-.08,y:.05},
-            {t:'l',x:-.14,y:.05},
+            {t:'m',x:-.05,y:-.02},
+            {t:'l',x:.05,y:-.02},
+            {t:'l',x:.03,y:.02},
+            {t:'l',x:-.03,y:.02},
           ]});
         } else {
           pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
-            {t:'m',x:-.16,y:-.03},
-            {t:'l',x:-.1,y:-.03},
-            {t:'l',x:-.1,y:-.01},
-            {t:'l',x:.1,y:-.01},
-            {t:'l',x:.1,y:-.03},
-            {t:'l',x:.16,y:-.03},
-            {t:'l',x:.16,y:.01},
-            {t:'l',x:.1,y:.01},
-            {t:'l',x:.1,y:.03},
-            {t:'l',x:-.1,y:.03},
-            {t:'l',x:-.1,y:.01},
-            {t:'l',x:-.16,y:.01},
+            {t:'m',x:-.02,y:-.01},
+            {t:'l',x:.02,y:-.01},
+            {t:'l',x:.01,y:.0},
+            {t:'l',x:-.01,y:.0},
           ]});
         }
       }
@@ -255,8 +240,8 @@
     function drawEye(type, pose, s) {
 
       ctx.lineWidth = .0;
-      let px = s*.175;
-      let py = -.09;
+      let px = s*.2;
+      let py = -.05;
 
       px += 0;
       py += 0;
@@ -265,58 +250,48 @@
       if (type == 'neutral') {
         if (pose == 'closed') {
           pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
-            {t:'m',x:-.12,y:-.03},
-            {t:'l',x:-.08,y:-.03},
-            {t:'l',x:-.08,y:-.04},
-            {t:'l',x:+.08,y:-.04},
-            {t:'l',x:+.08,y:-.03},
-            {t:'l',x:+.1,y:-.03},
-            {t:'l',x:+.1,y:-.01},
-            {t:'l',x:+.15,y:-.01},
-            {t:'l',x:+.15,y:-.00},
-            {t:'l',x:+.11,y:-.00},
-            {t:'l',x:+.08,y:-.00},
-            {t:'l',x:+.08,y:-.01},
-            {t:'l',x:+.06,y:-.01},
-            {t:'l',x:+.06,y:-.02},
-            {t:'l',x:-.06,y:-.02},
-            {t:'l',x:-.06,y:-.01},
-            {t:'l',x:-.12,y:-.01},
+            {t:'m',x:-.12,y:.0},
+            {t:'l',x:-.02,y:.01},
+            {t:'l',x:.07,y:-.01},
+            {t:'l',x:.14,y:-.05},
+            {t:'l',x:.12,y:-.01},
+            {t:'l',x:-.01,y:.04},
           ]});
+          ctx.closePath();
+          ctx.fill(); 
+          ctx.stroke(); 
         } else {
           pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
-            {t:'m',x:-.12,y:-.04},
-            {t:'l',x:-.08,y:-.04},
-            {t:'l',x:-.08,y:-.06},
-            {t:'l',x:+.08,y:-.06},
-            {t:'l',x:+.08,y:-.05},
-            {t:'l',x:+.1,y:-.05},
-            {t:'l',x:+.1,y:-.03},
-            {t:'l',x:+.15,y:-.03},
-            {t:'l',x:+.15,y:-.02},
-            {t:'l',x:+.11,y:-.02},
-            {t:'l',x:+.11,y:.01},
-            {t:'l',x:+.09,y:.01},
-            {t:'l',x:+.09,y:.02},
-            {t:'l',x:+.08,y:.02},
-            {t:'l',x:+.08,y:-.03},
-            {t:'l',x:+.06,y:-.03},
-            {t:'l',x:+.06,y:-.04},
-            {t:'l',x:-.06,y:-.04},
-            {t:'l',x:-.06,y:-.03},
-            {t:'l',x:-.12,y:-.03},
+            {t:'m',x:-.12,y:-.1},
+            {t:'l',x:-.05,y:-.125},
+            {t:'l',x:.09,y:-.04},
+            {t:'l',x:.1,y:-.04},
+            {t:'l',x:.16,y:-.05},
+            {t:'l',x:.12,y:-.02},
+            {t:'l',x:.06,y:.025},
+            {t:'l',x:.04,y:.03},
+            {t:'l',x:.09,y:-.02},
+            {t:'l',x:-.08,y:-.1},
           ]});
+          ctx.closePath();
+          ctx.fill(); 
+          ctx.stroke(); 
         }
       }
-
+      pather({offset: {x:px+s*.04,y:py-.12}, scale:{x:s,y:1}, list:[
+        {t:'m',x:-.08,y:-.09},
+        {t:'l',x:-.04,y:-.1},
+        {t:'l',x:.02,y:-.06},
+        {t:'l',x:-.05,y:-.09},
+      ]});
       ctx.closePath();
       ctx.fill(); 
       ctx.stroke(); 
 
       if (pose != 'closed') {
-        px += 0.0;
-        py += 0.0;
-        let pupil = 0.03;
+        px += -s*.085;
+        py += -0.01;
+        let pupil = 0.02;
         pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
           {t:'m',x:pupil,y:pupil},
           {t:'l',x:-pupil,y:pupil},
@@ -338,7 +313,7 @@
 
       emote.talking = brain.talking;
       emote.eyes = 'neutral';
-      emote.eyesPose = Math.floor(Date.now()/500)%5 == 0 ? 'closed' : 'open';
+      emote.eyesPose = (brain.blinking==1 || brain.blinking==2) ? 'closed' : 'open';
       emote.mouth = 'smile';
       emote.mouthPose = (Math.floor(Date.now()/250)%2 == 0 || !emote.talking) ? 'closed' : 'open';
 
@@ -362,12 +337,26 @@
       }
     }
 
+    let first = true;
     function render(currentTime) {
       i++;
+
       if (i >= t) {
         let deltaTime = currentTime - (brain.lastTime || currentTime);
         //console.log('Rendering ' + deltaTime);
         i -= t;
+
+        if (brain.blinkTimer < currentTime) {
+          if (brain.blinkTimer+300 < currentTime) {
+            brain.blinkTimer += (Math.random()*7 + 1)*1000;
+          } else if (brain.blinkTimer+150 < currentTime) {
+            brain.blinking = 2;
+          } else {
+            brain.blinking = 1;
+          }
+        } else {
+          brain.blinking = 0;
+        }
 
         resizeCanvas();
         clear();
@@ -390,8 +379,8 @@
             input.innerHTML = brain.chat.text;
 
             if (chat.fullText[chat.charIndex] == ' ') { chat.lastCharTime += chat.typeSpeed*1; }
-            if (chat.fullText[chat.charIndex] == ',') { chat.lastCharTime += chat.typeSpeed*6; }
-            if (chat.fullText[chat.charIndex] == '.') { chat.lastCharTime += chat.typeSpeed*8; }
+            if (chat.fullText[chat.charIndex] == ',') { chat.lastCharTime += chat.typeSpeed*4; }
+            if (chat.fullText[chat.charIndex] == '.') { chat.lastCharTime += chat.typeSpeed*6; }
           } else {
             brain.talking = false;
           }
@@ -401,12 +390,18 @@
       //if ((currentTime - brain.chat.lastCharTime > 5000)) { chat('Owo, uwu'); }
       
       if (reminders.timer == -1) {
-        reminders.timer = (Math.random()*reminders.range + reminders.interval)*1000;
+        reminders.timer = (Math.random()*reminders.range + reminders.interval)*10;
       } else if (reminders.timer < currentTime) {
         reminders.timer += (Math.random()*reminders.range + reminders.interval)*1000;
         console.log('should say something now');
-        let output, data = getLLMResponse('> Remind your host to have good habits');
+        //chat('IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII')
+        let output, data = getLLMResponse('> Remind your host to have good habits. Choose randomly one of these examples or generate your own recomendation: to study, do exercise, eat healthy, dont stick to the computer all day, continue your back projects, do homework, and give some inapelable arguments.');
         typedText = '';
+      }
+
+      if (first) {
+        first = !first;
+        //chat('.......................................')
       }
 
       requestAnimationFrame(render);
