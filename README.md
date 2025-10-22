@@ -26,3 +26,16 @@ We are looking forward to giving her more capabilities so she can really force y
 git clone https://github.com/AlVereas/Meekaa.git
 
 cd Meekaa
+
+```
+
+Get an API key from Groq: https://console.groq.com/keys
+
+Create a file called config.json in ./public and add
+```json
+{
+  "API_KEY": "whateverItIs"
+}
+```
+
+Then run a live server and you are ready to go
