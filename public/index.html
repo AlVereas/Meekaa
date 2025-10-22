@@ -239,7 +239,8 @@
       let py = .1;
       ctx.beginPath();
 
-      if (type == 'smile') {
+      let mouthList = [];
+      /*if (type == 'smile') {
         if (pose == 'open') {
           pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
             {t:'m',x:-.05,y:-.02},
@@ -265,31 +266,50 @@
           ]});
         } else {
           pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
-            {t:'m',x:-.02,y:.01},
-            {t:'l',x:.02,y:.01},
-            {t:'l',x:.0,y:.0},
+            {t:'m',x:-.02,y:.0},
+            {t:'l',x:.02,y:.0},
+            {t:'l',x:.0,y:-.01},
           ]});
         }
-      }
-      if (['a','i'].findIndex(pose)) { // Ahh
+      }*/
+     console.log(pose);
+      if (['a','i'].indexOf(pose)) { // Ahh
+        mouthList = [
+          {t:'m',x:-.05,y:-.02},
+          {t:'l',x:.05,y:-.02},
+          {t:'l',x:.03,y:.02},
+          {t:'l',x:-.03,y:.02},
+        ];
+      } else if (['b','m','p'].indexOf(pose)) { // Mmmm
+        console.log(pose);
+        mouthList = [
+          {t:'m',x:-.06,y:-.01},
+          {t:'l',x:.06,y:-.01},
+          {t:'l',x:.04,y:.0},
+          {t:'l',x:-.04,y:.0},
+        ];
+      } else if (['c','d','z'].indexOf(pose)) { // Zzz
 
-      } else if (['b','m','p'].findIndex(pose)) { // Mmmm
-
-      } else if (['c','d','z'].findIndex(pose)) { // Zzz
-
-      } else if (['e'].findIndex(pose)) { // Ehh
+      } else if (['e'].indexOf(pose)) { // Ehh
       
-      } else if (['f','v'].findIndex(pose)) { //Fff
+      } else if (['f','v'].indexOf(pose)) { //Fff
 
-      } else if (['g','h','j','k','q','t','x'].findIndex(pose)) { // Gkh
+      } else if (['g','h','j','k','q','t','x'].indexOf(pose)) { // Gkh
 
-      } else if (['l','r'].findIndex(pose)) { // L
-
-      } else if (['o','u'].findIndex(pose)) { // Ooohh
-
-      } else if (['s','y'].findIndex(pose)) { // Sss
+      } else if (['l','r'].indexOf(pose)) { // L
+        console.log(pose);
+      } else if (['o','u'].indexOf(pose)) { // Ooohh
+        mouthList = [
+          {t:'m',x:-.05,y:-.03},
+          {t:'l',x:.05,y:-.03},
+          {t:'l',x:.04,y:.03},
+          {t:'l',x:-.04,y:.03},
+        ];
+      } else if (['s','y'].indexOf(pose)) { // Sss
 
       }
+
+      pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:mouthList});
       ctx.closePath();
       ctx.fill(); 
       ctx.stroke(); 
@@ -372,16 +392,19 @@
       emote.talking = brain.talking;
       emote.eyes = 'neutral';
       emote.eyesPose = (brain.blinking==1 || brain.blinking==2) ? 'closed' : 'open';
-      emote.mouth = 'smile';
-      emote.mouthPose = (Math.floor(Date.now()/250)%2 == 0 || !emote.talking) ? 'closed' : 'open';
+
+      emote.mouth = 'sad';
+      emote.mouthPose = (Math.floor(Date.now()/250)%2 == 0 || !emote.talking) ? 'a' : 'r';
 
       var matches = brain.chat.fullText.match(/\[(.*?)\]/);
-      matches.forEach((content) => {
-        let obj, value = content.split(':');
-        if (obj == 'mouth') {
-          emote.mouth = value;
-        }
-      });
+      if (matches) {
+        matches.forEach((content) => {
+          let obj, value = content.split(':');
+          if (obj == 'mouth') {
+            emote.mouth = value;
+          }
+        });
+      }
       drawMouth(emote.mouth, emote.mouthPose);
       
       drawEye(emote.eyes, emote.eyesPose, -1);
@@ -465,7 +488,7 @@
 
       if (first) {
         first = !first;
-        //chat('.......................................')
+        chat('.......................................')
       }
 
       requestAnimationFrame(render);
