@@ -55,17 +55,32 @@
     let i = 5;
 
     let center = {};
+    const requests = {
+      "system": {
+        "prompt": "You are a Virtual Companion called Meekaa, you should give short length human-like answers, your mission is to keep your user out of bad habits, pushing them into going to learn and stop doing useless things."
+      },
+      "emotions": {
+        "prompt": "As a Virtual Companion, you have the capability of showing emotions/expresions, moving arround your eyes, and each part of your face individually, by typing them between brackets, these are your options: [eyes:happy/sad/neutral], [mouth:mappy/sad/neutral], [eyebrows:happy/sad/neutral], [lookX:(-1 - 1)], [lookY:(-1 - 1)]"
+      },
+      "reminder": {
+        "prompt": "> Remind your host to have good habits. Choose randomly one of these examples or generate your own recomendation: to study, do exercise, eat healthy, dont stick to the computer all day, continue your back projects, do homework, and give some inapelable arguments."
+      },
+      "study": {
+        "prompt": "> Make your host remember the things he has to learn divided in easy edible sections. This is the topic: "
+      }
+    }
 
     let reminders = {
       timer: -1,
-      interval: 60*15,
-      range: 60*30,
+      interval: 60*5,
+      range: 60*5,
     }
     let brain = {
       startTime: Date.now(),
       currentEmotion: {},
       talking: true,
       blinkTimer: -1,
+      conversation: [],
       
       chat: {
         fullText: '',
@@ -88,6 +103,10 @@
     });
 
     async function getLLMResponse(prompt) {
+        let promptChat = {
+          role: "user",
+          content: prompt
+        }
         const response = await fetch("https://api.groq.com/openai/v1/responses", {
             method: "POST",
             headers: {
@@ -99,12 +118,14 @@
                 input: [
                   {
                     role: "system",
-                    content: "You are a Virtual Companion called Meekaa, you should give short length human-like answers, your mission is to keep your user out of bad habits, pushing them into going to learn and stop doing useless things."
+                    content: requests.system.prompt
                   },
                   {
-                    role: "user",
-                    content: prompt
-                  }
+                    role: "system",
+                    content: requests.emotions.prompt
+                  },
+                  ...brain.conversation,
+                  nextChat
                 ]
             })
         });
@@ -118,9 +139,14 @@
         const textOutput = assistantMessages
           .map(msg => msg.content.map(c => c.text).join(" "))
           .join("\n");
-
-        console.log(textOutput);
         //console.log(output, data);
+
+        brain.conversation.push(nextChat);
+        assistantMessages.forEach((msg) => {
+          brain.conversation.push(msg);
+        })
+        console.log(brain.conversation);
+
         chat(textOutput);
 
         return textOutput, data;
@@ -229,9 +255,41 @@
             {t:'l',x:-.01,y:.0},
           ]});
         }
+      } else if (type == 'sad') {
+        if (pose == 'open') {
+          pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
+            {t:'m',x:-.05,y:.02},
+            {t:'l',x:.05,y:.02},
+            {t:'l',x:.03,y:-.02},
+            {t:'l',x:-.03,y:-.02},
+          ]});
+        } else {
+          pather({offset: {x:px,y:py}, scale:{x:1,y:1}, list:[
+            {t:'m',x:-.02,y:.01},
+            {t:'l',x:.02,y:.01},
+            {t:'l',x:.0,y:.0},
+          ]});
+        }
       }
+      if (['a','i'].findIndex(pose)) { // Ahh
 
+      } else if (['b','m','p'].findIndex(pose)) { // Mmmm
 
+      } else if (['c','d','z'].findIndex(pose)) { // Zzz
+
+      } else if (['e'].findIndex(pose)) { // Ehh
+      
+      } else if (['f','v'].findIndex(pose)) { //Fff
+
+      } else if (['g','h','j','k','q','t','x'].findIndex(pose)) { // Gkh
+
+      } else if (['l','r'].findIndex(pose)) { // L
+
+      } else if (['o','u'].findIndex(pose)) { // Ooohh
+
+      } else if (['s','y'].findIndex(pose)) { // Sss
+
+      }
       ctx.closePath();
       ctx.fill(); 
       ctx.stroke(); 
@@ -317,11 +375,17 @@
       emote.mouth = 'smile';
       emote.mouthPose = (Math.floor(Date.now()/250)%2 == 0 || !emote.talking) ? 'closed' : 'open';
 
+      var matches = brain.chat.fullText.match(/\[(.*?)\]/);
+      matches.forEach((content) => {
+        let obj, value = content.split(':');
+        if (obj == 'mouth') {
+          emote.mouth = value;
+        }
+      });
       drawMouth(emote.mouth, emote.mouthPose);
       
       drawEye(emote.eyes, emote.eyesPose, -1);
       drawEye(emote.eyes, emote.eyesPose, 1);
-      
 
       brain.currentEmotion = emote;
     }
@@ -390,12 +454,12 @@
       //if ((currentTime - brain.chat.lastCharTime > 5000)) { chat('Owo, uwu'); }
       
       if (reminders.timer == -1) {
-        reminders.timer = (Math.random()*reminders.range + reminders.interval)*10;
+        reminders.timer = (Math.random()*reminders.range + reminders.interval)*1000;
       } else if (reminders.timer < currentTime) {
         reminders.timer += (Math.random()*reminders.range + reminders.interval)*1000;
         console.log('should say something now');
         //chat('IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII')
-        let output, data = getLLMResponse('> Remind your host to have good habits. Choose randomly one of these examples or generate your own recomendation: to study, do exercise, eat healthy, dont stick to the computer all day, continue your back projects, do homework, and give some inapelable arguments.');
+        let output, data = getLLMResponse(requests.reminder.prompt);
         typedText = '';
       }
 
