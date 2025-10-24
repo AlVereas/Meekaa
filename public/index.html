@@ -63,13 +63,13 @@
         "prompt": "You are a Virtual Companion called Meekaa, you should give short length human-like answers, your mission is to keep your user out of bad habits, pushing them into going to learn and stop doing useless things. You must answer as human-like wrote text without using any special marks aside from the needed ones."
       },
       "emotions": {
-        "prompt": "As a Virtual Companion, you can and MUST show emotions/expresions, moving arround your eyes or and each part of your face individually to show yourself better for a human, by typing the expression between brackets. Change your expresion mid message using these brackets again to enhance it and make it feel more humanlike, these are your options: [eyes:happy/sad/neutral], [eyebrows:happy/sad/neutral], [lookX:(-1 - 1)], [lookY:(-1 - 1)]"
+        "prompt": "As a Virtual Companion, you can and MUST show emotions/expresions, moving arround your eyes or and each part of your face individually to show yourself better for a human, by typing the expression between brackets. Change your expresion mid message using these brackets again to enhance it and make it feel more humanlike, these are your options: [eyes:happy/sad/serious/surprised/neutral], [eyebrows:happy/sad/neutral] [mouth:neutral/happy/sad/serious], [lookX:(-1 - 1)], [lookY:(-1 - 1)]"
       },
       "reminder": {
-        "prompt": "> Quickly remind your host to have good habits. Choose randomly one of these examples or generate your own recomendation: to study, do exercise, eat healthy, dont stick to the computer all day, continue your back projects, do homework, and give some inapelable arguments."
+        "prompt": "Quickly remind your host to have good habits. Choose randomly one of these examples or generate your own recomendation: to study, do exercise, eat healthy, dont stick to the computer all day, continue your back projects, do homework, and give some inapelable arguments."
       },
       "study": {
-        "prompt": "> Make your host remember the things he has to learn divided in easy edible sections. This is the topic: "
+        "prompt": "Make your host remember the things he has to learn divided in easy edible sections. This is the topic: "
       }
     }
 
@@ -155,36 +155,6 @@
 
       return textOutput, data;
     }
-
-    /*
-    async function askLLM(prompt) {
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile", // Example model
-            input: prompt
-          })
-        });
-
-        const data = await response.json();
-        return data.output || JSON.stringify(data, null, 2);
-      } catch (error) {
-        console.error("Error calling Groq API:", error);
-        return "Error calling API. Check console.";
-      }
-    }
-
-    async function testLLM() {
-      const result = await askLLM('I want you to answer something');
-      console.log(result);
-    }
-
-    testLLM(); // call the async function*/
 
     function resizeCanvas() {
       // Set the canvas resolution to match the *actual pixel size*
@@ -315,7 +285,7 @@
       ctx.stroke(); 
     }
 
-    function drawEye(type, pose, s) {
+    function drawEye(type, pose, s, eyebrows) {
 
       ctx.lineWidth = .0;
       let px = s*.2;
@@ -325,21 +295,19 @@
       py += 0;
       ctx.beginPath();
 
+      let eyeList = [];
       if (type == 'neutral') {
         if (pose == 'closed') {
-          pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
+          eyeList = [
             {t:'m',x:-.12,y:.0},
             {t:'l',x:-.02,y:.01},
             {t:'l',x:.07,y:-.01},
             {t:'l',x:.14,y:-.05},
             {t:'l',x:.12,y:-.01},
             {t:'l',x:-.01,y:.04},
-          ]});
-          ctx.closePath();
-          ctx.fill(); 
-          ctx.stroke(); 
+          ];
         } else {
-          pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
+          eyeList = [
             {t:'m',x:-.12,y:-.1},
             {t:'l',x:-.05,y:-.125},
             {t:'l',x:.09,y:-.04},
@@ -350,60 +318,105 @@
             {t:'l',x:.04,y:.03},
             {t:'l',x:.09,y:-.02},
             {t:'l',x:-.08,y:-.1},
-          ]});
-          ctx.closePath();
-          ctx.fill(); 
-          ctx.stroke(); 
+          ];
         }
-      }
-      if (type == 'happy') {
+      } else if (type == 'serious') {
         if (pose == 'closed') {
-          pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
+          eyeList = [
             {t:'m',x:-.12,y:.0},
             {t:'l',x:-.02,y:.01},
             {t:'l',x:.07,y:-.01},
             {t:'l',x:.14,y:-.05},
             {t:'l',x:.12,y:-.01},
             {t:'l',x:-.01,y:.04},
-          ]});
-          ctx.closePath();
-          ctx.fill(); 
-          ctx.stroke(); 
+          ];
         } else {
-          pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
+          eyeList = [
+            {t:'m',x:-.15,y:-.07},
+            {t:'l',x:-.05,y:-.07},
+            {t:'l',x:.06,y:-.05},
+            {t:'l',x:.09,y:-.01},
+            {t:'l',x:.12,y:-.06},
+            {t:'l',x:.1,y:-.05},
+            {t:'l',x:-.04,y:-.09},
+          ];
+        }
+      } else if (type == 'happy') {
+        if (pose == 'closed') {
+          eyeList = [
+            {t:'m',x:-.15,y:-.03},
+            {t:'l',x:-.05,y:-.03},
+            {t:'l',x:.04,y:-.01},
+            {t:'l',x:.1,y:.01},
+            {t:'l',x:.13,y:-.02},
+            {t:'l',x:.08,y:-.01},
+            {t:'l',x:-.04,y:-.06},
+          ];
+        } else {
+          eyeList = [
+            {t:'m',x:-.15,y:-.03},
+            {t:'l',x:-.05,y:-.03},
+            {t:'l',x:.04,y:-.01},
+            {t:'l',x:.1,y:.01},
+            {t:'l',x:.13,y:-.02},
+            {t:'l',x:.08,y:-.01},
+            {t:'l',x:-.04,y:-.06},
+          ];
+        }
+      }
+      if (type == 'surprised') {
+        if (pose == 'closed') {
+          eyeList = [
+            {t:'m',x:-.12,y:.0},
+            {t:'l',x:-.02,y:.01},
+            {t:'l',x:.07,y:-.01},
+            {t:'l',x:.14,y:-.05},
+            {t:'l',x:.12,y:-.01},
+            {t:'l',x:-.01,y:.04},
+          ];
+        } else {
+          eyeList = [
             {t:'m',x:-.12,y:-.12},
             {t:'l',x:-.05,y:-.145},
-            {t:'l',x:.09,y:-.042},
-            {t:'l',x:.1,y:-.042},
+            {t:'l',x:.09,y:-.06},
             {t:'l',x:.16,y:-.05},
             {t:'l',x:.12,y:-.02},
             {t:'l',x:.06,y:.025},
             {t:'l',x:.04,y:.03},
-            {t:'l',x:.09,y:-.02},
+            {t:'l',x:.09,y:-.03},
             {t:'l',x:-.05,y:-.11},
-          ]});
-          ctx.closePath();
-          ctx.fill(); 
-          ctx.stroke(); 
+          ];
         }
       }
-
-
-
-
-      pather({offset: {x:px+s*.04,y:py-.12}, scale:{x:s,y:1}, list:[
-        {t:'m',x:-.08,y:-.09},
-        {t:'l',x:-.04,y:-.1},
-        {t:'l',x:.02,y:-.06},
-        {t:'l',x:-.05,y:-.09},
-      ]});
+      pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:eyeList});
       ctx.closePath();
       ctx.fill(); 
       ctx.stroke(); 
 
-      if (pose != 'closed') {
+      let eyebrowsList = [];
+      if (eyebrows == 'angry') {
+        eyebrowsList = [
+          {t:'m',x:-.08,y:-.09},
+          {t:'l',x:-.04,y:-.1},
+          {t:'l',x:.02,y:-.06},
+          {t:'l',x:-.05,y:-.09},
+        ];
+      } else {
+        eyebrowsList = [
+          {t:'m',x:-.08,y:-.09},
+          {t:'l',x:-.04,y:-.1},
+          {t:'l',x:.02,y:-.06},
+          {t:'l',x:-.05,y:-.09},
+        ];
+      }
+      pather({offset: {x:px+s*.04,y:py-.12}, scale:{x:s,y:1}, list:eyebrowsList});
+      ctx.closePath();
+      ctx.fill(); 
+      ctx.stroke(); 
+
+      if (pose != 'closed' && !['happy'].includes(type)) {
         px += -s*.085;
-        py += -0.01;
+        py += -0.02;
         let pupil = 0.02;
         pather({offset: {x:px,y:py}, scale:{x:s,y:1}, list:[
           {t:'m',x:pupil,y:pupil},
@@ -425,14 +438,15 @@
       brain.emote.talking = brain.talking;
       brain.emote.eyes = brain.emote.eyes || brain.currentEmotion.eyes || 'neutral';
       brain.emote.eyesPose = (brain.blinking==1 || brain.blinking==2) ? 'closed' : 'open';
+      brain.emote.eyebrows = brain.emote.eyebrows || brain.currentEmotion.eyebrows || 'neutral';
 
       brain.emote.mouth = 'neutral';
-      brain.emote.mouthPose = (brain.emote.talking) ? ((Math.floor(Date.now()/250)%2 == 0) ? 'b' : 'a') : ' ';
+      brain.emote.mouthPose = brain.chat.fullText[brain.chat.charIndex] // (brain.emote.talking) ? ((Math.floor(Date.now()/250)%2 == 0) ? 'b' : 'a') : ' ';
 
       drawMouth(brain.emote.mouth, brain.emote.mouthPose);
       
-      drawEye(brain.emote.eyes, brain.emote.eyesPose, -1);
-      drawEye(brain.emote.eyes, brain.emote.eyesPose, 1);
+      drawEye(brain.emote.eyes, brain.emote.eyesPose, -1, brain.emote.eyebrows);
+      drawEye(brain.emote.eyes, brain.emote.eyesPose, 1, brain.emote.eyebrows);
 
       //console.log(brain.emote.eyes);
 
@@ -528,6 +542,7 @@
             if (nextChar === ',') chat.lastCharTime += chat.typeSpeed * 4;
             if (nextChar === '.') chat.lastCharTime += chat.typeSpeed * 6;
           } else {
+            brain.emote.eyes = 'neutral';
             brain.talking = false;
           }
         }
@@ -536,10 +551,9 @@
       //if ((currentTime - brain.chat.lastCharTime > 5000)) { chat('Owo, uwu'); }
       
       if (reminders.timer == -1) {
-        reminders.timer = (Math.random()*reminders.range + reminders.interval)*10;
+        reminders.timer = (Math.random()*reminders.range + reminders.interval)*100000;
       } else if (reminders.timer < currentTime) {
         reminders.timer += (Math.random()*reminders.range + reminders.interval)*1000;
-        console.log('should say something now');
         //chat('IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII')
         let output, data = getLLMResponse(requests.reminder.prompt);
         typedText = '';
@@ -547,7 +561,7 @@
 
       if (first) {
         first = !first;
-        //chat('[eyes:happy][eyebrows:happy]Hello my dear[eyes:neutral][eyebrows:neutral], how was your day?')
+        //chat('[eyes:happy][eyebrows:happy]Hello my dear, [eyes:neutral][eyebrows:neutral] how was your day?')
       }
 
       requestAnimationFrame(render);
